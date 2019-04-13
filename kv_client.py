@@ -15,12 +15,15 @@ def run():
     # of the code.
 
     #TODO localhost
-    with grpc.insecure_channel('localhost:50051') as channel:
+    with grpc.insecure_channel('localhost:50052') as channel:
         stub = kvstore_pb2_grpc.KeyValueStoreStub(channel)
         print("Trying...")
         response = stub.Put(kvstore_pb2.PutRequest(key='a', value ='b'))
         print("Put received: "+ str(response.ret))
 
+        response = stub.Get(kvstore_pb2.GetRequest(key='a'))
+        print("Get received: "+ str(response.ret))
+        print("Get received: "+ str(response.value))
 
 if __name__ == '__main__':
     logging.basicConfig()
