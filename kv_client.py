@@ -7,23 +7,28 @@ import grpc
 
 import kvstore_pb2
 import kvstore_pb2_grpc
+import random
+
+
+def get_host():
+    #TODO
+    Host = ['localhost:50050', '52.24.196.183:50050']
+
+    selected = random.randint(0,1)
+    return Host[selected]
 
 
 def run():
-    # NOTE(gRPC Python Team): .close() is possible on a channel and should be
-    # used in circumstances in which the with statement does not fit the needs
-    # of the code.
-
-    #TODO localhost
-    with grpc.insecure_channel('localhost:50052') as channel:
+    #One server test cases
+    with grpc.insecure_channel(get_host()) as channel:
         stub = kvstore_pb2_grpc.KeyValueStoreStub(channel)
         print("Trying...")
-        response = stub.Put(kvstore_pb2.PutRequest(key='a', value ='b'))
-        print("Put received: "+ str(response.ret))
+        response = stub.Put(kvstore_pb2.PutRequest(key='a', value ='b', flag ='user'))
+        print("Put response code: "+ str(response.ret))
 
-        response = stub.Get(kvstore_pb2.GetRequest(key='a'))
-        print("Get received: "+ str(response.ret))
-        print("Get received: "+ str(response.value))
+        response = stub.Get(kvstore_pb2.GetRequest(key='c'))
+        print("Get received code: "+ str(response.ret))
+        print("Get received value: "+ str(response.value))
 
 if __name__ == '__main__':
     logging.basicConfig()
