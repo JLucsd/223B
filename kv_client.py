@@ -12,7 +12,7 @@ import random
 
 def get_host():
     #TODO
-    Host = ['localhost:50050', '52.24.196.183:50050']
+    Host = ['54.200.135.126:50050', '52.24.196.183:50050']
 
     selected = random.randint(0,1)
     return Host[selected]
@@ -26,7 +26,7 @@ def run():
         response = stub.Put(kvstore_pb2.PutRequest(key='a', value ='b', flag ='user'))
         print("Put response code: "+ str(response.ret))
 
-        response = stub.Get(kvstore_pb2.GetRequest(key='c'))
+        response = stub.Get(kvstore_pb2.GetRequest(key='c', flag = 'user'))
         print("Get received code: "+ str(response.ret))
         print("Get received value: "+ str(response.value))
 
