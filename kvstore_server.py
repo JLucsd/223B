@@ -44,7 +44,7 @@ class KVStoreServer(kvstore_pb2_grpc.KeyValueStoreServicer):
                     print("Trying to replicate put...")
 
                     #TODO add try catch here 
-                    response = stub.Put(kvstore_pb2.GetRequest(key=key, value =value, flag ="server"))
+                    response = stub.Put(kvstore_pb2.PutRequest(key=key, value =value, flag ="server"))
 
         
         return kvstore_pb2.PutResponse(ret = kvstore_pb2.SUCCESS)
