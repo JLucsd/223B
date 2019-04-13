@@ -19,8 +19,7 @@ def run():
         stub = kvstore_pb2_grpc.KeyValueStoreStub(channel)
         print("Trying...")
         response = stub.Put(kvstore_pb2.PutRequest(key='a', value ='b'))
-
-    print("Put received: " + response.message)
+        print("Put received: "+ str(response.ret))
 
 
 if __name__ == '__main__':
