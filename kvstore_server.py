@@ -10,9 +10,11 @@ import kvstore_pb2_grpc
 import chaosmonkey_pb2
 import chaosmonkey_pb2_grpc
 
+import urllib.request
+
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
-host_list = []
+
 chaosMatrix = []
 
 def chaosFilter(i,j):
@@ -46,11 +48,16 @@ class ChaosMonkeyServer(chaosmonkey_pb2_grpc.ChaosMonkeyServicer):
         print chaosMatrix 
         return chaosmonkey_pb2.Status(ret=chaosmonkey_pb2.OK) 
 
+PORT = ':50050'
+host_list = ['54.200.135.126', '52.24.196.183']
+
 class KVStoreServer(kvstore_pb2_grpc.KeyValueStoreServicer):
     def __init__(self):
         self.map = {}
+        ip = urllib.request.urlopen("http://169.254.169.254/latest/meta-data/public-ipv4").read()
+        self.ip = ip.decode('utf-8')
 
-
+    
     def Put(self, request, context):
         key = request.key
         value = request.value
@@ -62,12 +69,19 @@ class KVStoreServer(kvstore_pb2_grpc.KeyValueStoreServicer):
         
         if flag == "user":
             for host in host_list:
+
+                #don't send it to yourself
+                if host == self.ip:
+                    continue
+
+                #broadcast
+                host = host + PORT
                 with grpc.insecure_channel(host) as channel:
                     stub = kvstore_pb2_grpc.KeyValueStoreStub(channel)
                     print("Trying to replicate put...")
 
                     #TODO add try catch here 
-                    response = stub.Put(kvstore_pb2.GetRequest(key=key, value =value, flag ="server"))
+                    response = stub.Put(kvstore_pb2.PutRequest(key=key, value =value, flag ="server"))
 
         
         return kvstore_pb2.PutResponse(ret = kvstore_pb2.SUCCESS)
@@ -79,24 +93,28 @@ class KVStoreServer(kvstore_pb2_grpc.KeyValueStoreServicer):
 
         print("Getting..." + key )
         value = ""
-
         found_value = False
-        # raise Exception("chaos monkey")
 
         if key in self.map:
             value = self.map[key]
             found_value = True
-        elif flag == "server":
+        elif flag == "user":
             print("Not in this server, broadcast to all the other servers...")
             for host in host_list:
+                #don't send it to yourself
+                if host == self.ip:
+                    continue
+                
+                #broadcast
+                host = host + PORT
                 with grpc.insecure_channel(host) as channel:
                     stub = kvstore_pb2_grpc.KeyValueStoreStub(channel)
-                    print("Trying...")
+                    print("Trying to broadcast get...")
 
                     #TODO add try catch here 
-                    response = stub.Get(kvstore_pb2.GetRequest(key=key))
+                    response = stub.Get(kvstore_pb2.GetRequest(key=key, flag="server"))
                     if response.ret == kvstore_pb2.SUCCESS:
-                        print("Put received: "+ str(response.value) )
+                        print("Get received: "+ str(response.value) )
                         value = response.value
                         found_value = True
                         break
@@ -111,7 +129,7 @@ def serve():
     kvstore_pb2_grpc.add_KeyValueStoreServicer_to_server(KVStoreServer(), server)
     chaosmonkey_pb2_grpc.add_ChaosMonkeyServicer_to_server(ChaosMonkeyServer(), server)
 
-    server.add_insecure_port('[::]:50050')
+    server.add_insecure_port('[::]' +PORT)
     server.start()
     try:
         while True:
