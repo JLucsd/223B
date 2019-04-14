@@ -9,6 +9,7 @@ import kvstore_pb2
 import kvstore_pb2_grpc
 import chaosmonkey_pb2
 import chaosmonkey_pb2_grpc
+import sys
 
 import urllib.request
 
@@ -16,6 +17,8 @@ import urllib.request
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
 chaosMatrix = []
+host_list = []
+serverid = 0
 
 def chaosFilter(i,j):
     val = random.random()
@@ -49,7 +52,6 @@ class ChaosMonkeyServer(chaosmonkey_pb2_grpc.ChaosMonkeyServicer):
         return chaosmonkey_pb2.Status(ret=chaosmonkey_pb2.OK) 
 
 PORT = ':50050'
-host_list = ['54.200.135.126', '52.24.196.183']
 
 class KVStoreServer(kvstore_pb2_grpc.KeyValueStoreServicer):
     def __init__(self):
@@ -140,5 +142,14 @@ def serve():
 
 
 if __name__ == '__main__':
+    
+    print("server id " + sys.argv[1])
+    serverid = sys.argv[1]
     logging.basicConfig()
+    #read ip address of servers
+    global host_list
+    filepath = "server_config.txt"
+    with open(filepath) as fp:
+        host_list = [line.strip() for line in fp.readlines()]
+    print("all servers ip: ", host_list)
     serve()
